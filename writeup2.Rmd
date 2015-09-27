@@ -82,9 +82,9 @@ After all this treatment, the data frame used has been reduced from the 160 orig
 
 As a final step of data treatment, we are going to discard the highest correlated variables. If one of the variables is highly correlated with the others, it would make that are effects too represented in the dataframe. 
 
-The correlation between the different 49 variables is done using the `cor` function, and the result is applied to the function from the `caret` package: findCorrelation. This function takes care to point to the variables that are more correlated withs the others, as default this function has a cutoff at 0.90. This would give us a vector with the indexs of the rows that are too correlated and are going to be discarded.
+The correlation between the different 49 variables is done using the `cor` function, and the result is applied to the function from the `caret` package: findCorrelation. This function takes care to point to the variables that are more correlated with the others, as default this function has a cutoff at 0.90. This would give us a vector with the indexs of the rows that are too correlated and are going to be discarded.
 
-In order to perform this part of the analysis, the last row has not be subtracted temporarly, because it holds the key(A,B,C,D,E) of each activity as a factor variable which should not be taken into account for this.
+In order to perform this part of the analysis, the last row has been subtracted temporarly, because it holds the key(A,B,C,D,E) of each activity as a factor variable which should not be taken into account for this.
 
 ```{r,eval=TRUE,echo=TRUE}
 cor_train_fold<-cor(train_fold[-ncol(train_fold)]) #Correlation calculation(the last column, the factor variable, is subtracted)
@@ -99,7 +99,7 @@ This makes a total of 42 variables in the final data frame considered to build t
 
 After cleaning the data set from dirty data, no useful data and the highest correlated variables, we are going to build the model.
 
-The aim of the project is to be able to classify one exercise as well done or wrongly. Thus one of the best models for classification is Random Forest, due to its effectiveness, it is the one chosen for this project. Although it is usually very slow too. A library for parallel processing has been included (doParallel) to produce a faster output.
+The aim of the project is to be able to classify one exercise as well done or wrongly. Thus one of the best models for classification is Random Forest, due to its effectiveness, it is the one chosen for this project. Although it is usually very slow too.
 
 ```{r,eval=FALSE,echo=TRUE}
 modelFit<-train(classe ~ ., data = train_fold, method = "rf")
@@ -135,7 +135,7 @@ As can be seen in the output of the model, it tries to maximize the accuracy of 
 #Cross validation
 
 Before applying our model to real predictions, it is necessary that we try to make cross validation using the test set that we separated at the beginning of the analysis (30% of the total data set). 
-As the model seems to be very accurate and we have clean the dataset a lot to include the minimun number of variables possible (thut the model is more simple), there should be a high order of sensitivity and specifity.
+As the model seems to be very accurate and we have clean the dataset a lot to include the minimun number of variables possible (thus the model is more simple), there should be a high order of sensitivity and specifity.
 
 ```{r,eval=TRUE,echo=TRUE}
 summary(train_fold$classe)
@@ -149,7 +149,7 @@ test_fold<-data[-partition_vector,] #Getting for the test set after data partiti
 #We introduce the predict function with the test fold set to the confusionMatrix function.
 confusionMatrix(data=predict(modelFit,test_fold),reference=test_fold$classe)
 
-# This was not runned either because i did not have time to run again train function so I do not have loaded the modelFit, i have copy pasted from my console (you can check all by running the .R file.)
+# This was not runned either because i did not have time to run again train function so I #do not have loaded the modelFit, I have copy pasted from my console (you can check all #by running the .R file.)
 
 
 Confusion Matrix and Statistics
