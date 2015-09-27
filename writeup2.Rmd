@@ -1,0 +1,196 @@
+---
+title: "Machine Learning Project"
+author: "GRibeiro"
+date: "September 25, 2015"
+output: html_document
+graphics: yes
+---
+#Introduction
+
+This Machine learning project is based in analysing the data from a data base of self-movement. The aim of recording this data is bein able to predict how well the activity is done. Thus the database holds data from 6 participants, that perfomed lifts in 5 different ways, one was correct and the others incorrect.
+
+The goal of this project is to create a model using a machine learning algorithm in order to be able to predict, using the same kind of data, if the activity performed is correct (classe A), or incorrect , and in this case which kind of error is being perfomed(classe B,C,D,E).
+
+#Data treatment - pre processing
+
+The first step has been to separate the database in two, a testing set and the training set. This has been done using the createDataPartition function such 70% of the data goes to the train set and 30% for the test set. This is done in order to be able to perform cross-validation when the model has been trained.
+
+The two functions used to read and create the data partition are showed in the following chunk. 
+
+```{r,eval=TRUE,echo=FALSE,message=FALSE}
+
+library(caret)
+
+
+```
+
+```{r,eval=TRUE,echo=TRUE}
+data_read<-function(path_name){
+    data<-read.csv(path_name,header=TRUE,na.strings = NA)
+    for (i in 1:7){
+        data[1]<-NULL
+    }
+    return (data)    
+}
+
+partition<-function(data){
+    train_vector<-createDataPartition(y=data$classe,p=0.7,list=FALSE)
+    return (train_vector)
+}
+
+data<-data_read("./pml-training.csv")
+
+partition_vector<-partition(data)
+
+train_fold<-data[partition_vector,] #Getting the train set after data partition
+
+```
+
+One of the best ways to increment the efficency of a model is being able to neglect the variables that are not useful.
+
+The seven columns from the beginning of the database which are related with the name of the participants and the different times needed for the training were deleted directly from the beginning. In order to be able to predict if the activity is being done correctly , those variables should not give any real information, as they are not really related with how the activity is performed, thus it was decided to not include them in the analysis.This is done in the first function data_read.
+
+The data base has several variables that consists mainly of NAs values. It also includes several columns which are almost empty or with strange values like #DIV0, these variables are the ones that have words "kurtosis", "skewness" and "yaw". It has been decided to delete this columns to avoid problems in the model. 
+
+```{r,eval=TRUE,echo=TRUE}
+clean_data<-function(data){
+    index_vector<-vector(mode="logical", length=length(data))
+    for (i in 1:length(data)){
+        if(any(is.na(data[i]))){
+            index_vector[i]<-FALSE
+        }else{
+            index_vector[i]<-TRUE
+            }
+    }
+    data<-subset(data,select=index_vector)
+    v1<-grep("kurtosis",colnames(data))
+    v2<-grep("skewness",colnames(data))
+    v3<-grep("yaw",colnames(data))
+    vfinal<-sort(unique(c(v1,v2,v3)))
+    data<-data[-vfinal]
+    return (data)
+}
+
+
+train_fold<-clean_data(train_fold)
+
+```
+
+After all this treatment, the data frame used has been reduced from the 160 original variables to 49 variables, this should make easier to build the model.
+
+
+
+As a final step of data treatment, we are going to discard the highest correlated variables. If one of the variables is highly correlated with the others, it would make that are effects too represented in the dataframe. 
+
+The correlation between the different 49 variables is done using the `cor` function, and the result is applied to the function from the `caret` package: findCorrelation. This function takes care to point to the variables that are more correlated withs the others, as default this function has a cutoff at 0.90. This would give us a vector with the indexs of the rows that are too correlated and are going to be discarded.
+
+In order to perform this part of the analysis, the last row has not be subtracted temporarly, because it holds the key(A,B,C,D,E) of each activity as a factor variable which should not be taken into account for this.
+
+```{r,eval=TRUE,echo=TRUE}
+cor_train_fold<-cor(train_fold[-ncol(train_fold)]) #Correlation calculation(the last column, the factor variable, is subtracted)
+vector_cor_train<-findCorrelation(cor_train_fold) #pointing to the highest correlated
+train_fold<-train_fold[-vector_cor_train] #subtraction of the highest correlated.
+```
+
+This makes a total of 42 variables in the final data frame considered to build the model.
+
+#Model building
+
+
+After cleaning the data set from dirty data, no useful data and the highest correlated variables, we are going to build the model.
+
+The aim of the project is to be able to classify one exercise as well done or wrongly. Thus one of the best models for classification is Random Forest, due to its effectiveness, it is the one chosen for this project. Although it is usually very slow too. A library for parallel processing has been included (doParallel) to produce a faster output.
+
+```{r,eval=FALSE,echo=TRUE}
+modelFit<-train(classe ~ ., data = train_fold, method = "rf")
+modelFit
+
+#This has not been runned again due to probelms of time before submitting. I have #copy-pasted from my console where it was runned before. (you can check it running the .R #file, but it takes a while)
+
+Random Forest 
+
+13737 samples
+41 predictor
+5 classes: 'A', 'B', 'C', 'D', 'E' 
+
+No pre-processing
+Resampling: Bootstrapped (25 reps) 
+Summary of sample sizes: 13737, 13737, 13737, 13737, 13737, 13737, ... 
+Resampling results across tuning parameters:
+    
+    mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
+2    0.9845741  0.9804810  0.002477945  0.003134743
+21    0.9842561  0.9800816  0.002364515  0.002988925
+41    0.9676362  0.9590550  0.003799445  0.004807399
+
+Accuracy was used to select the optimal model using  the largest value.
+The final value used for the model was mtry = 2.
+
+```
+
+The model is trained using as predictors all the variables that are left from the training set and considering the classe(factor) variable as the output.
+
+As can be seen in the output of the model, it tries to maximize the accuracy of the model, an it has used mtry=2 in the end, which are the number of variables randomly samples as candidates at each split. The accuracy is almost 98.5%.
+
+#Cross validation
+
+Before applying our model to real predictions, it is necessary that we try to make cross validation using the test set that we separated at the beginning of the analysis (30% of the total data set). 
+As the model seems to be very accurate and we have clean the dataset a lot to include the minimun number of variables possible (thut the model is more simple), there should be a high order of sensitivity and specifity.
+
+```{r,eval=TRUE,echo=TRUE}
+summary(train_fold$classe)
+```
+As can be seen, in our database, there are more values of the factor A(which are the correct), than the others, therefore we have probably better results for this variable that what we have for the others.
+
+
+```{r,eval=FALSE,echo=TRUE}
+test_fold<-data[-partition_vector,] #Getting for the test set after data partition
+
+#We introduce the predict function with the test fold set to the confusionMatrix function.
+confusionMatrix(data=predict(modelFit,test_fold),reference=test_fold$classe)
+
+# This was not runned either because i did not have time to run again train function so I do not have loaded the modelFit, i have copy pasted from my console (you can check all by running the .R file.)
+
+
+Confusion Matrix and Statistics
+
+Reference
+Prediction    A    B    C    D    E
+A 1672    7    0    0    0
+B    2 1125    8    0    0
+C    0    7 1017   25    0
+D    0    0    1  939    3
+E    0    0    0    0 1079
+
+Overall Statistics
+
+Accuracy : 0.991           
+95% CI : (0.9882, 0.9932)
+No Information Rate : 0.2845          
+P-Value [Acc > NIR] : < 2.2e-16       
+
+Kappa : 0.9886          
+Mcnemar's Test P-Value : NA              
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            0.9988   0.9877   0.9912   0.9741   0.9972
+Specificity            0.9983   0.9979   0.9934   0.9992   1.0000
+Pos Pred Value         0.9958   0.9912   0.9695   0.9958   1.0000
+Neg Pred Value         0.9995   0.9971   0.9981   0.9949   0.9994
+Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
+Detection Rate         0.2841   0.1912   0.1728   0.1596   0.1833
+Detection Prevalence   0.2853   0.1929   0.1782   0.1602   0.1833
+Balanced Accuracy      0.9986   0.9928   0.9923   0.9866   0.9986
+
+
+```
+
+The results seems to be very good for all the classe, we have a very high Sensitivity and precision. Therefore the out of sample error should be very small as our cross-validation seems to be very accurate.
+
+#Conclusion
+
+As the cross-validation of the model seems to give very good results, and we have clean the database from a lot of variables, the overfitting is probably avoided. Although the Random Forest has a tendency to produce.
+
+The model was run over the assignment test case and was able to predict the 20 cases correctly.
