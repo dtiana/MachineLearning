@@ -120,8 +120,8 @@ train_fold&lt;-data[partition_vector,] #Getting the train set after data partiti
 train_fold&lt;-clean_data(train_fold)</code></pre>
 <p>After all this treatment, the data frame used has been reduced from the 160 original variables to 49 variables, this should make easier to build the model.</p>
 <p>As a final step of data treatment, we are going to discard the highest correlated variables. If one of the variables is highly correlated with the others, it would make that are effects too represented in the dataframe.</p>
-<p>The correlation between the different 49 variables is done using the <code>cor</code> function, and the result is applied to the function from the <code>caret</code> package: findCorrelation. This function takes care to point to the variables that are more correlated withs the others, as default this function has a cutoff at 0.90. This would give us a vector with the indexs of the rows that are too correlated and are going to be discarded.</p>
-<p>In order to perform this part of the analysis, the last row has not be subtracted temporarly, because it holds the key(A,B,C,D,E) of each activity as a factor variable which should not be taken into account for this.</p>
+<p>The correlation between the different 49 variables is done using the <code>cor</code> function, and the result is applied to the function from the <code>caret</code> package: findCorrelation. This function takes care to point to the variables that are more correlated with the others, as default this function has a cutoff at 0.90. This would give us a vector with the indexs of the rows that are too correlated and are going to be discarded.</p>
+<p>In order to perform this part of the analysis, the last row has been subtracted temporarly, because it holds the key(A,B,C,D,E) of each activity as a factor variable which should not be taken into account for this.</p>
 <pre class="r"><code>cor_train_fold&lt;-cor(train_fold[-ncol(train_fold)]) #Correlation calculation(the last column, the factor variable, is subtracted)
 vector_cor_train&lt;-findCorrelation(cor_train_fold) #pointing to the highest correlated
 train_fold&lt;-train_fold[-vector_cor_train] #subtraction of the highest correlated.</code></pre>
@@ -130,7 +130,7 @@ train_fold&lt;-train_fold[-vector_cor_train] #subtraction of the highest correla
 <div id="model-building" class="section level1">
 <h1>Model building</h1>
 <p>After cleaning the data set from dirty data, no useful data and the highest correlated variables, we are going to build the model.</p>
-<p>The aim of the project is to be able to classify one exercise as well done or wrongly. Thus one of the best models for classification is Random Forest, due to its effectiveness, it is the one chosen for this project. Although it is usually very slow too. A library for parallel processing has been included (doParallel) to produce a faster output.</p>
+<p>The aim of the project is to be able to classify one exercise as well done or wrongly. Thus one of the best models for classification is Random Forest, due to its effectiveness, it is the one chosen for this project. Although it is usually very slow too.</p>
 <pre class="r"><code>modelFit&lt;-train(classe ~ ., data = train_fold, method = &quot;rf&quot;)
 modelFit
 
@@ -159,7 +159,7 @@ The final value used for the model was mtry = 2.</code></pre>
 </div>
 <div id="cross-validation" class="section level1">
 <h1>Cross validation</h1>
-<p>Before applying our model to real predictions, it is necessary that we try to make cross validation using the test set that we separated at the beginning of the analysis (30% of the total data set). As the model seems to be very accurate and we have clean the dataset a lot to include the minimun number of variables possible (thut the model is more simple), there should be a high order of sensitivity and specifity.</p>
+<p>Before applying our model to real predictions, it is necessary that we try to make cross validation using the test set that we separated at the beginning of the analysis (30% of the total data set). As the model seems to be very accurate and we have clean the dataset a lot to include the minimun number of variables possible (thus the model is more simple), there should be a high order of sensitivity and specifity.</p>
 <pre class="r"><code>summary(train_fold$classe)</code></pre>
 <pre><code>##    A    B    C    D    E 
 ## 3906 2658 2396 2252 2525</code></pre>
@@ -169,7 +169,7 @@ The final value used for the model was mtry = 2.</code></pre>
 #We introduce the predict function with the test fold set to the confusionMatrix function.
 confusionMatrix(data=predict(modelFit,test_fold),reference=test_fold$classe)
 
-# This was not runned either because i did not have time to run again train function so I do not have loaded the modelFit, i have copy pasted from my console (you can check all by running the .R file.)
+# This was not runned either because i did not have time to run again train function so I #do not have loaded the modelFit, I have copy pasted from my console (you can check all #by running the .R file.)
 
 
 Confusion Matrix and Statistics
