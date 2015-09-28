@@ -120,8 +120,8 @@ train_fold&lt;-data[partition_vector,] #Getting the train set after data partiti
 train_fold&lt;-clean_data(train_fold)</code></pre>
 <p>After all this treatment, the data frame used has been reduced from the 160 original variables to 49 variables, this should make easier to build the model.</p>
 <p>As a final step of data treatment, we are going to discard the highest correlated variables. If one of the variables is highly correlated with the others, it would make that are effects too represented in the dataframe.</p>
-<p>The correlation between the different 49 variables is done using the <code>cor</code> function, and the result is applied to the function from the <code>caret</code> package: findCorrelation. This function takes care to point to the variables that are more correlated with the others, as default this function has a cutoff at 0.90. This would give us a vector with the indexs of the rows that are too correlated and are going to be discarded.</p>
-<p>In order to perform this part of the analysis, the last row has been subtracted temporarly, because it holds the key(A,B,C,D,E) of each activity as a factor variable which should not be taken into account for this.</p>
+<p>The correlation between the different 49 variables is done using the <code>cor</code> function, and the result is applied to the function from the <code>caret</code> package: findCorrelation. This function takes care to point to the variables that are more correlated withs the others, as default this function has a cutoff at 0.90. This would give us a vector with the indexs of the rows that are too correlated and are going to be discarded.</p>
+<p>In order to perform this part of the analysis, the last row has not be subtracted temporarly, because it holds the key(A,B,C,D,E) of each activity as a factor variable which should not be taken into account for this.</p>
 <pre class="r"><code>cor_train_fold&lt;-cor(train_fold[-ncol(train_fold)]) #Correlation calculation(the last column, the factor variable, is subtracted)
 vector_cor_train&lt;-findCorrelation(cor_train_fold) #pointing to the highest correlated
 train_fold&lt;-train_fold[-vector_cor_train] #subtraction of the highest correlated.</code></pre>
@@ -130,36 +130,36 @@ train_fold&lt;-train_fold[-vector_cor_train] #subtraction of the highest correla
 <div id="model-building" class="section level1">
 <h1>Model building</h1>
 <p>After cleaning the data set from dirty data, no useful data and the highest correlated variables, we are going to build the model.</p>
-<p>The aim of the project is to be able to classify one exercise as well done or wrongly. Thus one of the best models for classification is Random Forest, due to its effectiveness, it is the one chosen for this project. Although it is usually very slow too.</p>
-<pre class="r"><code>modelFit&lt;-train(classe ~ ., data = train_fold, method = &quot;rf&quot;)
-modelFit
-
-#This has not been runned again due to problems of time before submitting. I have copy-pasted from my console where it was runned before. (you can check it running the .R file, but it takes a while)
-
-Random Forest 
-
-13737 samples
-41 predictor
-5 classes: 'A', 'B', 'C', 'D', 'E' 
-
-No pre-processing
-Resampling: Bootstrapped (25 reps) 
-Summary of sample sizes: 13737, 13737, 13737, 13737, 13737, 13737, ... 
-Resampling results across tuning parameters:
-    
-    mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
-2    0.9845741  0.9804810  0.002477945  0.003134743
-21    0.9842561  0.9800816  0.002364515  0.002988925
-41    0.9676362  0.9590550  0.003799445  0.004807399
-
-Accuracy was used to select the optimal model using  the largest value.
-The final value used for the model was mtry = 2.</code></pre>
+<p>The aim of the project is to be able to classify one exercise as well done or wrongly. Thus one of the best models for classification is Random Forest, due to its effectiveness, it is the one chosen for this project. Although it is usually very slow too. A library for parallel processing has been included (doParallel) to produce a faster output.</p>
+<pre class="r"><code>modelFit&lt;-train(classe ~ ., data = train_fold, method = &quot;rf&quot;)</code></pre>
+<pre><code>## Loading required package: randomForest
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<pre class="r"><code>modelFit</code></pre>
+<pre><code>## Random Forest 
+## 
+## 13737 samples
+##    41 predictor
+##     5 classes: 'A', 'B', 'C', 'D', 'E' 
+## 
+## No pre-processing
+## Resampling: Bootstrapped (25 reps) 
+## Summary of sample sizes: 13737, 13737, 13737, 13737, 13737, 13737, ... 
+## Resampling results across tuning parameters:
+## 
+##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
+##    2    0.9845491  0.9804445  0.001844407  0.002330601
+##   21    0.9838546  0.9795678  0.002053166  0.002590364
+##   41    0.9653739  0.9561803  0.004780177  0.006029764
+## 
+## Accuracy was used to select the optimal model using  the largest value.
+## The final value used for the model was mtry = 2.</code></pre>
 <p>The model is trained using as predictors all the variables that are left from the training set and considering the classe(factor) variable as the output.</p>
 <p>As can be seen in the output of the model, it tries to maximize the accuracy of the model, an it has used mtry=2 in the end, which are the number of variables randomly samples as candidates at each split. The accuracy is almost 98.5%.</p>
 </div>
 <div id="cross-validation" class="section level1">
 <h1>Cross validation</h1>
-<p>Before applying our model to real predictions, it is necessary that we try to make cross validation using the test set that we separated at the beginning of the analysis (30% of the total data set). As the model seems to be very accurate and we have clean the dataset a lot to include the minimun number of variables possible (thus the model is more simple), there should be a high order of sensitivity and specifity.</p>
+<p>Before applying our model to real predictions, it is necessary that we try to make cross validation using the test set that we separated at the beginning of the analysis (30% of the total data set). As the model seems to be very accurate and we have clean the dataset a lot to include the minimun number of variables possible (thut the model is more simple), there should be a high order of sensitivity and specifity.</p>
 <pre class="r"><code>summary(train_fold$classe)</code></pre>
 <pre><code>##    A    B    C    D    E 
 ## 3906 2658 2396 2252 2525</code></pre>
@@ -167,43 +167,38 @@ The final value used for the model was mtry = 2.</code></pre>
 <pre class="r"><code>test_fold&lt;-data[-partition_vector,] #Getting for the test set after data partition
 
 #We introduce the predict function with the test fold set to the confusionMatrix function.
-
-confusionMatrix(data=predict(modelFit,test_fold),reference=test_fold$classe)
-
-# This was not runned either because I did not have time to run again the train function so I do not have loaded the modelFit, thus I cannot run the predict function. I have copy pasted from my console (you can check all by running the .R file.)
-
-
-Confusion Matrix and Statistics
-
-Reference
-Prediction    A    B    C    D    E
-A 1672    7    0    0    0
-B    2 1125    8    0    0
-C    0    7 1017   25    0
-D    0    0    1  939    3
-E    0    0    0    0 1079
-
-Overall Statistics
-
-Accuracy : 0.991           
-95% CI : (0.9882, 0.9932)
-No Information Rate : 0.2845          
-P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
-
-Kappa : 0.9886          
-Mcnemar's Test P-Value : NA              
-
-Statistics by Class:
-
-                     Class: A Class: B Class: C Class: D Class: E
-Sensitivity            0.9988   0.9877   0.9912   0.9741   0.9972
-Specificity            0.9983   0.9979   0.9934   0.9992   1.0000
-Pos Pred Value         0.9958   0.9912   0.9695   0.9958   1.0000
-Neg Pred Value         0.9995   0.9971   0.9981   0.9949   0.9994
-Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
-Detection Rate         0.2841   0.1912   0.1728   0.1596   0.1833
-Detection Prevalence   0.2853   0.1929   0.1782   0.1602   0.1833
-Balanced Accuracy      0.9986   0.9928   0.9923   0.9866   0.9986</code></pre>
+confusionMatrix(data=predict(modelFit,test_fold),reference=test_fold$classe)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1674   15    0    1    0
+##          B    0 1121    9    0    0
+##          C    0    3 1015   28    0
+##          D    0    0    2  935    4
+##          E    0    0    0    0 1078
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9895          
+##                  95% CI : (0.9865, 0.9919)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9867          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            1.0000   0.9842   0.9893   0.9699   0.9963
+## Specificity            0.9962   0.9981   0.9936   0.9988   1.0000
+## Pos Pred Value         0.9905   0.9920   0.9704   0.9936   1.0000
+## Neg Pred Value         1.0000   0.9962   0.9977   0.9941   0.9992
+## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
+## Detection Rate         0.2845   0.1905   0.1725   0.1589   0.1832
+## Detection Prevalence   0.2872   0.1920   0.1777   0.1599   0.1832
+## Balanced Accuracy      0.9981   0.9912   0.9914   0.9843   0.9982</code></pre>
 <p>The results seems to be very good for all the classe, we have a very high Sensitivity and precision. Therefore the out of sample error should be very small as our cross-validation seems to be very accurate.</p>
 </div>
 <div id="conclusion" class="section level1">
