@@ -134,7 +134,7 @@ train_fold&lt;-train_fold[-vector_cor_train] #subtraction of the highest correla
 <pre class="r"><code>modelFit&lt;-train(classe ~ ., data = train_fold, method = &quot;rf&quot;)
 modelFit
 
-#This has not been runned again due to probelms of time before submitting. I have #copy-pasted from my console where it was runned before. (you can check it running the .R #file, but it takes a while)
+#This has not been runned again due to problems of time before submitting. I have copy-pasted from my console where it was runned before. (you can check it running the .R file, but it takes a while)
 
 Random Forest 
 
@@ -167,9 +167,10 @@ The final value used for the model was mtry = 2.</code></pre>
 <pre class="r"><code>test_fold&lt;-data[-partition_vector,] #Getting for the test set after data partition
 
 #We introduce the predict function with the test fold set to the confusionMatrix function.
+
 confusionMatrix(data=predict(modelFit,test_fold),reference=test_fold$classe)
 
-# This was not runned either because i did not have time to run again train function so I #do not have loaded the modelFit, I have copy pasted from my console (you can check all #by running the .R file.)
+# This was not runned either because I did not have time to run again the train function so I do not have loaded the modelFit, thus I cannot run the predict function. I have copy pasted from my console (you can check all by running the .R file.)
 
 
 Confusion Matrix and Statistics
